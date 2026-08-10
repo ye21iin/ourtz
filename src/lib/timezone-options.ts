@@ -47,3 +47,15 @@ export function getCityForTimezone(timezone: string): string | null {
 
   return match?.city ?? null;
 }
+
+export function getCityDisplayName(timezone: string): string {
+  const city = getCityForTimezone(timezone);
+
+  if (city) {
+    return city;
+  }
+
+  const fallback = timezone.split("/").pop();
+
+  return fallback ? fallback.replace(/_/g, " ") : timezone;
+}
