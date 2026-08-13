@@ -1,4 +1,4 @@
-import { formatInTimeZone, getTimezoneOffset } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime, getTimezoneOffset } from "date-fns-tz";
 
 export function formatTimeInZone(date: Date, timeZone: string): string {
   return formatInTimeZone(date, timeZone, "HH:mm");
@@ -10,6 +10,14 @@ export function formatDateInZone(date: Date, timeZone: string): string {
 
 export function getTimeZoneLabel(timeZone: string): string {
   return timeZone.replace(/_/g, " ");
+}
+
+export function getEventInstant(datetime: string, timezone: string): Date {
+  return fromZonedTime(datetime, timezone);
+}
+
+export function formatEventDateTime(date: Date, timezone: string): string {
+  return formatInTimeZone(date, timezone, "MMM d · h:mm a");
 }
 
 function getDateKeyInZone(date: Date, timeZone: string): string {
@@ -115,5 +123,46 @@ export function getFriendTimeDisplay(
     date,
     relativeDateLabel: getRelativeDateLabel(now, friendTimezone, userTimezone),
     timeDifference: formatTimeDifference(now, userTimezone, friendTimezone),
+  };
+}
+
+export type EventTimeDisplay = {
+  originalDateTime: string;
+  localDateTime: string | null;
+  localDateOffsetLabel: "Next day" | "Previous day" | null;
+};
+
+export function getEventTimeDisplay(
+  datetime: string,
+  eventTimezone: string,
+  userTimezone: string | null,
+): EventTimeDisplay {
+  const instant = getEventInstant(datetime, eventTimezone);
+  const originalDateTime = formatEventDateTime(instant, eventTimezone);
+
+  if (!userTimezone) {
+    return {
+      originalDateTime,
+      localDateTime: null,
+      localDateOffsetLabel: null,
+    };
+  }
+
+  const originalDateKey = getDateKeyInZone(instant, eventTimezone);
+  const localDateKey = getDateKeyInZone(instant, userTimezone);
+  const dayDiff = getCalendarDayDiff(localDateKey, originalDateKey);
+
+  let localDateOffsetLabel: EventTimeDisplay["localDateOffsetLabel"] = null;
+
+  if (dayDiff === 1) {
+    localDateOffsetLabel = "Next day";
+  } else if (dayDiff === -1) {
+    localDateOffsetLabel = "Previous day";
+  }
+
+  return {
+    originalDateTime,
+    localDateTime: formatEventDateTime(instant, userTimezone),
+    localDateOffsetLabel,
   };
 }

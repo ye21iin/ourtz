@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 type AppHeaderProps = {
-  active?: "home" | "friends";
+  active?: "events" | "friends" | "home";
 };
 
 export function AppHeader({ active }: AppHeaderProps) {
@@ -10,7 +10,7 @@ export function AppHeader({ active }: AppHeaderProps) {
     <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
         <Link
-          href="/"
+          href="/events"
           className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
         >
           OURTZ
@@ -19,14 +19,14 @@ export function AppHeader({ active }: AppHeaderProps) {
         <div className="flex items-center gap-4">
           <nav className="flex items-center gap-4 text-sm font-medium">
             <Link
-              href="/"
+              href="/events"
               className={
-                active === "home"
+                active === "events"
                   ? "text-zinc-900 dark:text-zinc-50"
                   : "text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
               }
             >
-              Home
+              Events
             </Link>
             <Link
               href="/friends"
