@@ -10,7 +10,7 @@ export function AppHeader({ active }: AppHeaderProps) {
     <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
         <Link
-          href="/events"
+          href="/"
           className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
         >
           OURTZ

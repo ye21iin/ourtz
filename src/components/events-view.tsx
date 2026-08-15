@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { Plus, X } from "lucide-react";
 import { AddEventModal } from "@/components/add-event-modal";
 import { AddTimezonePopover } from "@/components/add-timezone-popover";
 import { AppHeader } from "@/components/app-header";
+import { CardIconButton } from "@/components/card-icon-button";
 import { refreshEventsStore, useEvents } from "@/hooks/use-events";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { addEvent, deleteEvent, updateEvent } from "@/lib/events-storage";
@@ -104,15 +106,15 @@ export function EventsView() {
           <button
             type="button"
             onClick={() => setShowAddModal(true)}
-            className="rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="shrink-0 rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            + Add event
+            Add event
           </button>
         </div>
 
         <section className="mt-10">
           <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-            Saved ({events.length})
+            Events ({events.length})
           </h2>
 
           {events.length === 0 ? (
@@ -185,13 +187,9 @@ function EventCard({
           {event.title}
         </p>
 
-        <button
-          type="button"
-          onClick={onDelete}
-          className="shrink-0 rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-red-900 dark:hover:bg-red-950 dark:hover:text-red-300"
-        >
-          Remove
-        </button>
+        <CardIconButton label="Remove event" tone="danger" onClick={onDelete}>
+          <X className="size-4" aria-hidden="true" />
+        </CardIconButton>
       </div>
 
       <p className="mt-4 text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -226,40 +224,40 @@ function EventCard({
             );
 
             return (
-              <li
-                key={`${comparison.city}-${comparison.timezone}`}
-                className="flex items-start justify-between gap-3"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <li key={`${comparison.city}-${comparison.timezone}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="min-w-0 truncate text-sm font-medium text-zinc-700 dark:text-zinc-300">
                     {comparison.city}
                   </p>
-                  <ConvertedTimeRow
-                    dateTime={converted.dateTime}
-                    dateOffsetLabel={converted.dateOffsetLabel}
-                  />
+                  <button
+                    type="button"
+                    onClick={() => onRemoveTimezone(comparison)}
+                    aria-label={`Remove ${comparison.city}`}
+                    title="Remove"
+                    className="-mr-1 inline-flex size-6 shrink-0 items-center justify-center rounded-md text-zinc-300 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                  >
+                    <X className="size-3.5" aria-hidden="true" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onRemoveTimezone(comparison)}
-                  aria-label={`Remove ${comparison.city}`}
-                  className="shrink-0 rounded-full px-2 py-1 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                >
-                  Remove
-                </button>
+                <ConvertedTimeRow
+                  dateTime={converted.dateTime}
+                  dateOffsetLabel={converted.dateOffsetLabel}
+                />
               </li>
             );
           })}
         </ul>
       ) : null}
 
-      <div className="relative mt-4">
+      <div className="relative mt-2">
         <button
           type="button"
           onClick={() => setShowTimezonePicker((open) => !open)}
-          className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+          aria-label="Add timezone"
+          title="Add timezone"
+          className="inline-flex size-6 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
         >
-          + Add timezone
+          <Plus className="size-3.5" aria-hidden="true" />
         </button>
 
         {showTimezonePicker ? (

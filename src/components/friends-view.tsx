@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { X } from "lucide-react";
 import { AddFriendModal } from "@/components/add-friend-modal";
 import { AppHeader } from "@/components/app-header";
+import { CardIconButton } from "@/components/card-icon-button";
 import { LocalClock } from "@/components/local-clock";
 import { refreshFriendsStore, useFriends } from "@/hooks/use-friends";
 import { useNow } from "@/hooks/use-now";
@@ -28,7 +30,7 @@ export function FriendsView() {
   }
 
   function handleDelete(friend: Friend) {
-    const confirmed = window.confirm(`Remove ${friend.name} from your friends?`);
+    const confirmed = window.confirm(`Remove “${friend.name}” from your friends?`);
 
     if (!confirmed) {
       return;
@@ -50,14 +52,18 @@ export function FriendsView() {
               Friends
             </p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-              Your people across time zones
+              Friends
             </h1>
+            <p className="mt-2 max-w-xl text-base leading-7 text-zinc-600 dark:text-zinc-400">
+              See local times for people across time zones — add someone and
+              compare when they are awake.
+            </p>
           </div>
 
           <button
             type="button"
             onClick={() => setShowAddModal(true)}
-            className="rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="shrink-0 rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
             Add friend
           </button>
@@ -131,13 +137,9 @@ function FriendCard({
           {friend.name}
         </p>
 
-        <button
-          type="button"
-          onClick={onDelete}
-          className="shrink-0 rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-red-900 dark:hover:bg-red-950 dark:hover:text-red-300"
-        >
-          Remove
-        </button>
+        <CardIconButton label="Remove friend" tone="danger" onClick={onDelete}>
+          <X className="size-4" aria-hidden="true" />
+        </CardIconButton>
       </div>
 
       <p className="mt-4 text-5xl font-semibold leading-none tracking-tight text-zinc-900 tabular-nums sm:text-6xl dark:text-zinc-50">
