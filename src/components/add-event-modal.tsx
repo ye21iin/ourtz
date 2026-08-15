@@ -5,6 +5,7 @@ import {
   filterTimezoneOptions,
   type TimezoneOption,
 } from "@/lib/timezone-options";
+import type { ComparisonTimezone } from "@/types/event";
 
 type AddEventModalProps = {
   onClose: () => void;
@@ -12,6 +13,8 @@ type AddEventModalProps = {
     title: string;
     datetime: string;
     timezone: string;
+    city: string;
+    comparisonTimezones: ComparisonTimezone[];
   }) => void;
 };
 
@@ -38,7 +41,9 @@ export function AddEventModal({ onClose, onSave }: AddEventModalProps) {
   const [date, setDate] = useState(getDefaultDate);
   const [time, setTime] = useState(getDefaultTime);
   const [search, setSearch] = useState("");
-  const [selectedTimezone, setSelectedTimezone] = useState<string | null>(null);
+  const [selectedOption, setSelectedOption] = useState<TimezoneOption | null>(
+    null,
+  );
 
   const filteredOptions = useMemo(
     () => filterTimezoneOptions(search),
@@ -50,17 +55,19 @@ export function AddEventModal({ onClose, onSave }: AddEventModalProps) {
     trimmedTitle.length > 0 &&
     date.length > 0 &&
     time.length > 0 &&
-    selectedTimezone !== null;
+    selectedOption !== null;
 
   function handleSave() {
-    if (!canSave || !selectedTimezone) {
+    if (!canSave || !selectedOption) {
       return;
     }
 
     onSave({
       title: trimmedTitle,
       datetime: `${date}T${time}`,
-      timezone: selectedTimezone,
+      timezone: selectedOption.timezone,
+      city: selectedOption.city,
+      comparisonTimezones: [],
     });
   }
 
@@ -153,10 +160,10 @@ export function AddEventModal({ onClose, onSave }: AddEventModalProps) {
               ) : (
                 filteredOptions.map((option) => (
                   <TimezoneOptionRow
-                    key={option.timezone}
+                    key={`${option.city}-${option.timezone}`}
                     option={option}
-                    selected={selectedTimezone === option.timezone}
-                    onSelect={() => setSelectedTimezone(option.timezone)}
+                    selected={selectedOption?.city === option.city}
+                    onSelect={() => setSelectedOption(option)}
                   />
                 ))
               )}

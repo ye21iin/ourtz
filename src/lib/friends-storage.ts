@@ -1,18 +1,35 @@
 import type { Friend } from "@/types/friend";
+import { getCityDisplayName } from "@/lib/timezone-options";
 
 const STORAGE_KEY = "ourtz:friends";
 
-function isFriend(value: unknown): value is Friend {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "id" in value &&
-    "name" in value &&
-    "timezone" in value &&
-    typeof value.id === "string" &&
-    typeof value.name === "string" &&
-    typeof value.timezone === "string"
-  );
+function normalizeFriend(value: unknown): Friend | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+
+  if (
+    !("id" in value) ||
+    !("name" in value) ||
+    !("timezone" in value) ||
+    typeof value.id !== "string" ||
+    typeof value.name !== "string" ||
+    typeof value.timezone !== "string"
+  ) {
+    return null;
+  }
+
+  const city =
+    "city" in value && typeof value.city === "string" && value.city.length > 0
+      ? value.city
+      : getCityDisplayName(value.timezone);
+
+  return {
+    id: value.id,
+    name: value.name,
+    timezone: value.timezone,
+    city,
+  };
 }
 
 function parseFriends(raw: string): Friend[] {
@@ -23,7 +40,9 @@ function parseFriends(raw: string): Friend[] {
       return [];
     }
 
-    return parsed.filter(isFriend);
+    return parsed
+      .map(normalizeFriend)
+      .filter((friend): friend is Friend => friend !== null);
   } catch {
     return [];
   }

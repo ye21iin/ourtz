@@ -126,10 +126,41 @@ export function getFriendTimeDisplay(
   };
 }
 
+export type DateOffsetLabel = "Next day" | "Previous day" | null;
+
+export type ConvertedEventTime = {
+  dateTime: string;
+  dateOffsetLabel: DateOffsetLabel;
+};
+
+export function getConvertedEventTime(
+  datetime: string,
+  eventTimezone: string,
+  targetTimezone: string,
+): ConvertedEventTime {
+  const instant = getEventInstant(datetime, eventTimezone);
+  const originalDateKey = getDateKeyInZone(instant, eventTimezone);
+  const targetDateKey = getDateKeyInZone(instant, targetTimezone);
+  const dayDiff = getCalendarDayDiff(targetDateKey, originalDateKey);
+
+  let dateOffsetLabel: DateOffsetLabel = null;
+
+  if (dayDiff === 1) {
+    dateOffsetLabel = "Next day";
+  } else if (dayDiff === -1) {
+    dateOffsetLabel = "Previous day";
+  }
+
+  return {
+    dateTime: formatEventDateTime(instant, targetTimezone),
+    dateOffsetLabel,
+  };
+}
+
 export type EventTimeDisplay = {
   originalDateTime: string;
   localDateTime: string | null;
-  localDateOffsetLabel: "Next day" | "Previous day" | null;
+  localDateOffsetLabel: DateOffsetLabel;
 };
 
 export function getEventTimeDisplay(
@@ -148,21 +179,15 @@ export function getEventTimeDisplay(
     };
   }
 
-  const originalDateKey = getDateKeyInZone(instant, eventTimezone);
-  const localDateKey = getDateKeyInZone(instant, userTimezone);
-  const dayDiff = getCalendarDayDiff(localDateKey, originalDateKey);
-
-  let localDateOffsetLabel: EventTimeDisplay["localDateOffsetLabel"] = null;
-
-  if (dayDiff === 1) {
-    localDateOffsetLabel = "Next day";
-  } else if (dayDiff === -1) {
-    localDateOffsetLabel = "Previous day";
-  }
+  const converted = getConvertedEventTime(
+    datetime,
+    eventTimezone,
+    userTimezone,
+  );
 
   return {
     originalDateTime,
-    localDateTime: formatEventDateTime(instant, userTimezone),
-    localDateOffsetLabel,
+    localDateTime: converted.dateTime,
+    localDateOffsetLabel: converted.dateOffsetLabel,
   };
 }

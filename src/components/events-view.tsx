@@ -2,13 +2,17 @@
 
 import { useState } from "react";
 import { AddEventModal } from "@/components/add-event-modal";
+import { AddTimezonePopover } from "@/components/add-timezone-popover";
 import { AppHeader } from "@/components/app-header";
 import { refreshEventsStore, useEvents } from "@/hooks/use-events";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
-import { addEvent, deleteEvent } from "@/lib/events-storage";
-import { getEventTimeDisplay } from "@/lib/time";
-import { getCityDisplayName } from "@/lib/timezone-options";
-import type { Event } from "@/types/event";
+import { addEvent, deleteEvent, updateEvent } from "@/lib/events-storage";
+import { getConvertedEventTime, getEventTimeDisplay } from "@/lib/time";
+import {
+  getCityDisplayName,
+  type TimezoneOption,
+} from "@/lib/timezone-options";
+import type { ComparisonTimezone, Event } from "@/types/event";
 
 export function EventsView() {
   const events = useEvents();
@@ -19,6 +23,8 @@ export function EventsView() {
     title: string;
     datetime: string;
     timezone: string;
+    city: string;
+    comparisonTimezones: ComparisonTimezone[];
   }) {
     addEvent(input);
     refreshEventsStore();
@@ -35,6 +41,45 @@ export function EventsView() {
     if (deleteEvent(event.id)) {
       refreshEventsStore();
     }
+  }
+
+  function handleAddComparisonTimezone(
+    event: Event,
+    option: TimezoneOption,
+  ) {
+    if (
+      option.timezone === event.timezone ||
+      option.timezone === userTimezone ||
+      event.comparisonTimezones.some(
+        (item) => item.timezone === option.timezone,
+      )
+    ) {
+      return;
+    }
+
+    updateEvent(event.id, {
+      comparisonTimezones: [
+        ...event.comparisonTimezones,
+        { city: option.city, timezone: option.timezone },
+      ],
+    });
+    refreshEventsStore();
+  }
+
+  function handleRemoveComparisonTimezone(
+    event: Event,
+    comparison: ComparisonTimezone,
+  ) {
+    updateEvent(event.id, {
+      comparisonTimezones: event.comparisonTimezones.filter(
+        (item) =>
+          !(
+            item.city === comparison.city &&
+            item.timezone === comparison.timezone
+          ),
+      ),
+    });
+    refreshEventsStore();
   }
 
   return (
@@ -85,6 +130,12 @@ export function EventsView() {
                   event={event}
                   userTimezone={userTimezone}
                   onDelete={() => handleDelete(event)}
+                  onAddTimezone={(option) =>
+                    handleAddComparisonTimezone(event, option)
+                  }
+                  onRemoveTimezone={(comparison) =>
+                    handleRemoveComparisonTimezone(event, comparison)
+                  }
                 />
               ))}
             </ul>
@@ -106,17 +157,26 @@ function EventCard({
   event,
   userTimezone,
   onDelete,
+  onAddTimezone,
+  onRemoveTimezone,
 }: {
   event: Event;
   userTimezone: string | null;
   onDelete: () => void;
+  onAddTimezone: (option: TimezoneOption) => void;
+  onRemoveTimezone: (comparison: ComparisonTimezone) => void;
 }) {
-  const city = getCityDisplayName(event.timezone);
+  const [showTimezonePicker, setShowTimezonePicker] = useState(false);
   const display = getEventTimeDisplay(
     event.datetime,
     event.timezone,
     userTimezone,
   );
+  const excludedTimezones = [
+    event.timezone,
+    ...(userTimezone ? [userTimezone] : []),
+    ...event.comparisonTimezones.map((item) => item.timezone),
+  ];
 
   return (
     <li className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white px-5 py-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -134,30 +194,103 @@ function EventCard({
         </button>
       </div>
 
-      <p className="mt-4 text-lg font-medium text-zinc-900 dark:text-zinc-50">
+      <p className="mt-4 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        {event.city}
+      </p>
+      <p className="mt-1 text-lg font-medium text-zinc-900 dark:text-zinc-50">
         {display.originalDateTime}
       </p>
-      <p className="mt-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-        {city}
-      </p>
 
-      {display.localDateTime ? (
+      {display.localDateTime && userTimezone ? (
         <div className="mt-5 border-t border-zinc-100 pt-4 dark:border-zinc-800">
           <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            Your time
+            Your time · {getCityDisplayName(userTimezone)}
           </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {display.localDateOffsetLabel ? (
-              <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">
-                {display.localDateOffsetLabel}
-              </span>
-            ) : null}
-            <p className="text-base font-medium text-zinc-900 dark:text-zinc-50">
-              {display.localDateTime}
-            </p>
-          </div>
+          <ConvertedTimeRow
+            dateTime={display.localDateTime}
+            dateOffsetLabel={display.localDateOffsetLabel}
+          />
         </div>
       ) : null}
+
+      {event.comparisonTimezones.length > 0 ? (
+        <ul className="mt-4 flex flex-col gap-4">
+          {event.comparisonTimezones.map((comparison) => {
+            const converted = getConvertedEventTime(
+              event.datetime,
+              event.timezone,
+              comparison.timezone,
+            );
+
+            return (
+              <li
+                key={`${comparison.city}-${comparison.timezone}`}
+                className="flex items-start justify-between gap-3"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    {comparison.city}
+                  </p>
+                  <ConvertedTimeRow
+                    dateTime={converted.dateTime}
+                    dateOffsetLabel={converted.dateOffsetLabel}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onRemoveTimezone(comparison)}
+                  aria-label={`Remove ${comparison.city}`}
+                  className="shrink-0 rounded-full px-2 py-1 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                >
+                  Remove
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+
+      <div className="relative mt-4">
+        <button
+          type="button"
+          onClick={() => setShowTimezonePicker((open) => !open)}
+          className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+        >
+          + Add timezone
+        </button>
+
+        {showTimezonePicker ? (
+          <AddTimezonePopover
+            excludedTimezones={excludedTimezones}
+            onSelect={(option) => {
+              onAddTimezone(option);
+              setShowTimezonePicker(false);
+            }}
+            onClose={() => setShowTimezonePicker(false)}
+          />
+        ) : null}
+      </div>
     </li>
+  );
+}
+
+function ConvertedTimeRow({
+  dateTime,
+  dateOffsetLabel,
+}: {
+  dateTime: string;
+  dateOffsetLabel: string | null;
+}) {
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-2">
+      {dateOffsetLabel ? (
+        <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+          {dateOffsetLabel}
+        </span>
+      ) : null}
+      <p className="text-base font-medium text-zinc-900 dark:text-zinc-50">
+        {dateTime}
+      </p>
+    </div>
   );
 }

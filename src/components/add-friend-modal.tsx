@@ -8,13 +8,15 @@ import {
 
 type AddFriendModalProps = {
   onClose: () => void;
-  onSave: (name: string, timezone: string) => void;
+  onSave: (name: string, option: TimezoneOption) => void;
 };
 
 export function AddFriendModal({ onClose, onSave }: AddFriendModalProps) {
   const [name, setName] = useState("");
   const [search, setSearch] = useState("");
-  const [selectedTimezone, setSelectedTimezone] = useState<string | null>(null);
+  const [selectedOption, setSelectedOption] = useState<TimezoneOption | null>(
+    null,
+  );
 
   const filteredOptions = useMemo(
     () => filterTimezoneOptions(search),
@@ -22,14 +24,14 @@ export function AddFriendModal({ onClose, onSave }: AddFriendModalProps) {
   );
 
   const trimmedName = name.trim();
-  const canSave = trimmedName.length > 0 && selectedTimezone !== null;
+  const canSave = trimmedName.length > 0 && selectedOption !== null;
 
   function handleSave() {
-    if (!canSave || !selectedTimezone) {
+    if (!canSave || !selectedOption) {
       return;
     }
 
-    onSave(trimmedName, selectedTimezone);
+    onSave(trimmedName, selectedOption);
   }
 
   return (
@@ -95,10 +97,10 @@ export function AddFriendModal({ onClose, onSave }: AddFriendModalProps) {
               ) : (
                 filteredOptions.map((option) => (
                   <TimezoneOptionRow
-                    key={option.timezone}
+                    key={`${option.city}-${option.timezone}`}
                     option={option}
-                    selected={selectedTimezone === option.timezone}
-                    onSelect={() => setSelectedTimezone(option.timezone)}
+                    selected={selectedOption?.city === option.city}
+                    onSelect={() => setSelectedOption(option)}
                   />
                 ))
               )}

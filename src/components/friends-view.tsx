@@ -12,8 +12,8 @@ import {
   deleteFriend,
 } from "@/lib/friends-storage";
 import { getFriendTimeDisplay } from "@/lib/time";
-import { getCityDisplayName } from "@/lib/timezone-options";
 import type { Friend } from "@/types/friend";
+import type { TimezoneOption } from "@/lib/timezone-options";
 
 export function FriendsView() {
   const friends = useFriends();
@@ -21,8 +21,8 @@ export function FriendsView() {
   const userTimezone = useUserTimezone();
   const [showAddModal, setShowAddModal] = useState(false);
 
-  function handleAdd(name: string, timezone: string) {
-    addFriend({ name, timezone });
+  function handleAdd(name: string, option: TimezoneOption) {
+    addFriend({ name, timezone: option.timezone, city: option.city });
     refreshFriendsStore();
     setShowAddModal(false);
   }
@@ -121,7 +121,7 @@ function FriendCard({
   userTimezone: string | null;
   onDelete: () => void;
 }) {
-  const city = getCityDisplayName(friend.timezone);
+  const city = friend.city;
   const display = getFriendTimeDisplay(now, friend.timezone, userTimezone);
 
   return (
