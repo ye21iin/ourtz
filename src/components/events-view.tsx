@@ -200,6 +200,9 @@ function EventCard({
       <p className="mt-1 text-lg font-medium text-zinc-900 dark:text-zinc-50">
         {display.originalDateTime}
       </p>
+      <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+        {event.timezone}
+      </p>
 
       {display.localDateTime && userTimezone ? (
         <div className="mt-5 border-t border-zinc-100 pt-4 dark:border-zinc-800">
